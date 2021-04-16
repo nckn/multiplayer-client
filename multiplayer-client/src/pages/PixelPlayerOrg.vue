@@ -93,7 +93,7 @@ export default {
       // ip: 'http://192.168.43.216:3000', // Mobile
       // ip: 'http://10.135.232.10:3000', // VIAGuest
       // ip: '192.168.1.128:3000', // Hiper Fiber
-      ip: 'https://mighty-temple-28923.herokuapp.com/', // Heroku production
+      ip: 'https://mighty-temple-28923.herokuapp.com', // Heroku production
       colorPicker: null,
       clientDetails: {id: 0},
       thisClient: {
