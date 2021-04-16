@@ -1,0 +1,31 @@
+$ease-time: 0.2s;
+
+.btn {
+  &.icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all $ease-time ease-in;
+    opacity: 0.75;
+    &.camera-trigger {
+      background: url(/svg/icons/icon-camera-screenshot.svg) no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+    &.download {
+      background: url(/svg/icons/icon-download.svg) no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+    &.closeagain {
+      background: url(/svg/icons/icon-close.svg) no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+    &:hover {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+  }
+}
