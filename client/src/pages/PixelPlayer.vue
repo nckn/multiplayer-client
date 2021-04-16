@@ -1,6 +1,6 @@
 <template lang="pug">
   .container.outer.black-bg(ref="master_cont")
-    #containerNiceLight(ref="cont_pixel_player")
+    canvas#containerNiceLight(ref="cont_pixel_player")
     .container.inner.overlay
       .pixel-wrapper.dimmed(ref="pixel_wrapper")
         .pixel(
@@ -45,7 +45,7 @@
 // Example
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_postprocessing_unreal_bloom.html
 
-// import * as THREE from 'three'
+import * as THREE from 'three'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
 // import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -59,8 +59,8 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
 
 // import { map } from '@/assets/js/helpers'
 
-const modelOne = 'models/gltf/PrimaryIonDrive.glb'
-const modelTwo = 'models/gltf/morphman-mixamo-rigged-1.0.glb'
+// const modelOne = 'models/gltf/PrimaryIonDrive.glb'
+// const modelTwo = 'models/gltf/morphman-mixamo-rigged-1.0.glb'
 
 var grid = {x: 10, y: 10}
 
@@ -68,6 +68,7 @@ var grid = {x: 10, y: 10}
 import { map } from '@/assets/js/helpers'
 import iro from '@jaames/iro'
 import io from 'socket.io-client'
+import { DoubleSide } from 'three';
 
 var randomColors = [
   0xff3045,
@@ -85,7 +86,8 @@ var randomColors = [
 
 export default {
   name: 'Neon',
-  data () {
+  data () // @ts-ignore
+    {
     return {
       container: null,
       scene: null,
@@ -128,7 +130,11 @@ export default {
       rectLight: [],
       rectLightMesh: [],
       noOC: 4,
-      ringSize: 5
+      ringSize: 5,
+      sizes: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
     }
   },
   computed: {
@@ -395,60 +401,67 @@ export default {
     },
     setVars () {
       var self = this
-      self.clock = new self.$gThree.Clock()
+      self.clock = new THREE.Clock()
     },
     init () {
       var self = this
 
       // Texture Stacy
-      self.char_txt = new self.$gThree.TextureLoader().load('/textures/morphman-texture-test.jpg')
-      // self.char_txt = new self.$gThree.TextureLoader().load('/textures/stacy.jpg')
+      self.char_txt = new THREE.TextureLoader().load('/textures/morphman-texture-test.jpg')
+      // self.char_txt = new THREE.TextureLoader().load('/textures/stacy.jpg')
       
       self.char_txt.flipY = false
 
-      // self.char_mtl = new self.$gThree.MeshLambertMaterial({ color: 0x2194CE })
+      // self.char_mtl = new THREE.MeshLambertMaterial({ color: 0x2194CE })
 
-      self.char_mtl = new self.$gThree.MeshPhongMaterial({
+      self.char_mtl = new THREE.MeshPhongMaterial({
         map: self.stacy_txt,
         color: 0xffffff,
         skinning: true
         // skinning: false
       })
-      
-      // Container
-      self.container = self.$refs.cont_pixel_player
-      self.container.appendChild( self.$parent.renderer.domElement )
 
       // Stats
       // self.stats = new Stats()
       // self.container.appendChild( self.stats.dom )
       // console.log(Stats)
+      // Container
+      self.container = self.$refs.cont_pixel_player
       
       // Parent adjustments
-      self.$parent.renderer.toneMapping = self.$gThree.ReinhardToneMapping 
+      self.renderer = new THREE.WebGLRenderer({
+        canvas: self.container,
+        antialias: true
+      })
+      self.renderer.setSize(self.sizes.width, self.sizes.height)
+      self.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      self.renderer.outputEncoding = THREE.sRGBEncoding
+      self.renderer.toneMapping = THREE.ReinhardToneMapping 
       
+      // self.container.appendChild( self.renderer.domElement )
+
       // Camera
-      self.camera = new self.$gThree.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 )
+      self.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 )
       self.camera.position.set( 20, 10, 20 )
-      self.scene = new self.$gThree.Scene()
+      self.scene = new THREE.Scene()
 
       // Fog
-      self.scene.fog = new self.$gThree.Fog(0x000000, 50, 260)
+      self.scene.fog = new THREE.Fog(0x000000, 50, 260)
 
       // Lights
-      self.scene.add( new self.$gThree.AmbientLight( 0x404040 ) )
-      self.pointLight = new self.$gThree.PointLight( 0xffffff, 1 )
+      self.scene.add( new THREE.AmbientLight( 0x404040 ) )
+      self.pointLight = new THREE.PointLight( 0xffffff, 1 )
       self.camera.add( self.pointLight )
       
       var renderScene = new RenderPass( self.scene, self.camera );
 
-			var bloomPass = new UnrealBloomPass( new self.$gThree.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+			var bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
 			bloomPass.threshold = self.params.bloomThreshold;
 			bloomPass.strength = self.params.bloomStrength;
       bloomPass.radius = self.params.bloomRadius;
       
       self.fxaaPass = new ShaderPass( FXAAShader )
-      var pixelRatio = self.$parent.renderer.getPixelRatio()
+      var pixelRatio = self.renderer.getPixelRatio()
       self.fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( self.container.offsetWidth * pixelRatio );
       self.fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( self.container.offsetHeight * pixelRatio );
 
@@ -456,7 +469,7 @@ export default {
       // composer1.addPass( renderPass );
       // composer1.addPass( fxaaPass );
 
-			self.composer = new EffectComposer( self.$parent.renderer );
+			self.composer = new EffectComposer( self.renderer );
 			self.composer.addPass( renderScene );
       self.composer.addPass( bloomPass );
       self.composer.addPass( self.fxaaPass );
@@ -464,7 +477,7 @@ export default {
       // GUI - start
 			// self.gui = new GUI()
 			// self.gui.add( self.params, 'exposure', 0.1, 2 ).onChange( function ( value ) {
-      //   self.$parent.renderer.toneMappingExposure = Math.pow( value, 4.0 );
+      //   self.renderer.toneMappingExposure = Math.pow( value, 4.0 );
 			// })
 
 			// self.gui.add( self.params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
@@ -483,13 +496,13 @@ export default {
       // window.addEventListener( 'resize', self.onResize, false );
 
       // add plane to the scene
-      // var plane = new self.$gThree.Mesh(
-      //   new self.$gThree.BoxBufferGeometry( Math.PI, Math.sqrt( 2 ), Math.E ),
-      //   new self.$gThree.MeshLambertMaterial({
+      // var plane = new THREE.Mesh(
+      //   new THREE.BoxBufferGeometry( Math.PI, Math.sqrt( 2 ), Math.E ),
+      //   new THREE.MeshLambertMaterial({
       //     color: 0x00afaf,
       //     emissive: 0x2a2a2a,
       //     emissiveIntensity: .5,
-      //     side: self.$gThree.DoubleSide
+      //     side: THREE.DoubleSide
       // }));
       // self.scene.add(plane);
 
@@ -547,11 +560,11 @@ export default {
     makeBlackCenterCube() {
       var self = this
       var sz = 8.4
-      var material = new self.$gThree.MeshStandardMaterial({
+      var material = new THREE.MeshStandardMaterial({
         color: 0x000000 
       })
-      var geometry = new self.$gThree.BoxGeometry( sz, sz, sz )
-      var cube = new self.$gThree.Mesh(geometry, material)
+      var geometry = new THREE.BoxGeometry( sz, sz, sz )
+      var cube = new THREE.Mesh(geometry, material)
       cube.position.y = sz / 2
       self.scene.add( cube )
       cube.receiveShadow = true
@@ -560,23 +573,18 @@ export default {
     makeFloor() {
       var self = this
       // Plane - start
-      var floor = this.makePlane({
-        // color: 0x010101,
-        color: 0xffffff,
-        // emissive: 0xff00ff,
-        size: {w: 1000, d: 1000},
-        subs: 100,
-        rotation: Math.PI / 2,
-        position: {x: 0, y: 0, z: 0}
-      })
-      self.scene.add( floor )
-      floor.position.y = -0.5
+      const material = new THREE.MeshStandardMaterial({ color: 0x666666 })
+      const geometry = new THREE.PlaneBufferGeometry(100, 100, 1, 1)
+      const mesh = new THREE.Mesh(geometry, material)
+      mesh.rotation.x = Math.PI * 0.5
+      mesh.material.side = THREE.DoubleSide
+      self.scene.add(mesh)
       // Plane - end
     },
     makeCube() {
       var self = this
       var s = 0.8
-      var geometry = new self.$gThree.BoxGeometry( s, s, s )
+      var geometry = new THREE.BoxGeometry( s, s, s )
       // var randomColor = `0x${self.generateRandomHexCode()}`
       // var randomColor = '0x' + Math.floor(Math.random()*16777215).toString(16)
       // var randomColor = Math.random() * 0xffffff
@@ -584,14 +592,14 @@ export default {
       // console.log('random color: ', randomColor)
       // console.log('random color: ', randomColor)
       // console.log('obj.color: ', obj.color)
-      var material = new self.$gThree.MeshPhongMaterial({
+      var material = new THREE.MeshPhongMaterial({
         // color: String(randomColor),
         // emissive: String(randomColor),
         color: randomColor,
         emissive: randomColor,
         flatShading: true,
       });
-      var cube = new self.$gThree.Mesh( geometry, material )
+      var cube = new THREE.Mesh( geometry, material )
       // cube.material.color.setHex(Math.random() * 0xffffff)
       // cube.material.emissive.setHex(Math.random() * 0xaaaaaa)
       return cube
@@ -599,14 +607,14 @@ export default {
     setupGridPlanes () {
       var self = this
       for (var i = 0; i < self.noOC; i++ ) {
-        // self.rectLight[i] = new self.$gThree.RectAreaLight( 0xffffff, 1, 2, 2 );
+        // self.rectLight[i] = new THREE.RectAreaLight( 0xffffff, 1, 2, 2 );
         // self.rectLight[i].position.set( 5 * i, 10, 0 );
         
         // Grid
-        var groupMesh = new self.$gThree.Object3D()
-        var groupsubGroup = new self.$gThree.Object3D()
+        var groupMesh = new THREE.Object3D()
+        var groupsubGroup = new THREE.Object3D()
         groupsubGroup.position.x = -4
-        // groupMesh.applyMatrix( new self.$gThree.Matrix4().setTranslation( 0, 0, 2 ) )
+        // groupMesh.applyMatrix( new THREE.Matrix4().setTranslation( 0, 0, 2 ) )
         groupMesh.position.y = 0
         groupMesh.position.x = Math.sin( i / self.noOC * Math.PI * 2 ) * self.ringSize
         groupMesh.position.z = Math.cos( i / self.noOC * Math.PI * 2 ) * self.ringSize
@@ -624,7 +632,7 @@ export default {
 
         // Make
         self.scene.add( groupMesh )
-        groupMesh.lookAt( new self.$gThree.Vector3(0, 2 + self.sphereSize / 2, 0) )
+        groupMesh.lookAt( new THREE.Vector3(0, 2 + self.sphereSize / 2, 0) )
       }
     },
     addGeometry (obj) {
@@ -639,8 +647,8 @@ export default {
       // }
 
       // console.log('obj id is: ', obj.clientId)
-      var geometry = new self.$gThree.BoxGeometry( s, s, s );
-      // var material = new self.$gThree.MeshBasicMaterial( {
+      var geometry = new THREE.BoxGeometry( s, s, s );
+      // var material = new THREE.MeshBasicMaterial( {
       //   color: 0x777777
       // } );
       // var randomColor = Math.floor(Math.random()*16777215).toString(16)
@@ -649,7 +657,7 @@ export default {
       // console.log('random color: ', randomColor)
       // console.log('obj.color: ', obj.color)
       
-      var material = new self.$gThree.MeshPhongMaterial({
+      var material = new THREE.MeshPhongMaterial({
         // color: 0x000000,
         // color: obj.color ? obj.color: 0xf5f5f5,
         // emissive: obj.color ? obj.color: 0xf5f5f5,
@@ -657,7 +665,7 @@ export default {
         emissive: obj.color ? obj.color : randomColor,
         flatShading: true,
       });
-      var cube = new self.$gThree.Mesh( geometry, material );
+      var cube = new THREE.Mesh( geometry, material );
       // Set name of cube
       cube.name = obj.clientId
 
@@ -733,7 +741,7 @@ export default {
       // if (typeof self.controls != 'undefined') {
       //   console.log('before undefined')
       // }
-      self.controls = new OrbitControls( self.camera, self.$parent.renderer.domElement )
+      self.controls = new OrbitControls( self.camera, self.renderer.domElement )
       
       // Avoid going under floor
       self.controls.maxPolarAngle = (Math.PI * 0.5) * 0.99
@@ -756,14 +764,14 @@ export default {
 
       self.camera.aspect = self.width / self.height;
       self.camera.updateProjectionMatrix();
-      self.$parent.renderer.setSize(self.width, self.height);
+      self.renderer.setSize(self.width, self.height);
 
       // Get window width
       self.window = {w: window.innerWidth, h: window.innerHeight}
       console.log('windowW: ', self.window.w)
 
       // self.render()
-      // self.$parent.renderer.render(self.scene, self.camera)
+      // self.renderer.render(self.scene, self.camera)
     }
   }
 }

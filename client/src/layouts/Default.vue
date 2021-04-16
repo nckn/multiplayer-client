@@ -1,54 +1,8 @@
 <template lang="pug">
-  .header
-    ul
-      li
-        router-link(to="/") Home
-      li
-        router-link(to="/pixelplayer") PixelPlayer
-      li
-        router-link(to="/dome") Dome
-      //- li
-      //-   router-link(to="/cdome") CDome
-      li
-        router-link(to="/konradstudio") KS
-      li
-        router-link(to="/faceinfo") FI
-      //- li
-      //-   router-link(to="/faceprojection") FP
-      //- li
-      //-   router-link(to="/ao") AO
-      li
-        router-link(to="/physics") Physics
-      li
-        router-link(to="/nicelight") Nicelight
-      li
-        router-link(to="/neon") Neon
-      //- li
-      //-   router-link(to="/posaudio") PosAudio
-      li
-        router-link(to="/boxes") BoxesLayoutDOF
-      li
-        router-link(to="/reflection") Reflection
-      li
-        router-link(to="/softbodies") Soft bodies
-      //- li
-      //-   router-link(to="/staticnoise") Static Noise
-      li
-        router-link(to="/godrays") God Rays
-      li
-        router-link(to="/editor") Editor
-      li
-        router-link(to="/tfctls") TFCtls
-      li
-        router-link(to="/type") Type
-      li
-        router-link(to="/distortimage") DistortImage
-      li
-        router-link(to="/hovereffect") HoverEffect
-      //- li
-      //-   v-link(href="/") Home
-      //-   v-link(href="/about") About
-    //- slot
+  //- .header
+  //-   ul
+  //-     li
+  //-       router-link(to="/pixelplayer") PixelPlayer
 </template>
 
 <script>

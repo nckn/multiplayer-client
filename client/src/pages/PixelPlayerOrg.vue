@@ -1,6 +1,6 @@
 <template lang="pug">
   .container.outer.black-bg(ref="master_cont")
-    #containerNiceLight(ref="cont_pixel_player")
+    canvas#containerNiceLight(ref="cont_pixel_player")
     .container.inner.overlay
       .pixel-wrapper.dimmed(ref="pixel_wrapper")
         .pixel(
@@ -45,7 +45,7 @@
 // Example
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_postprocessing_unreal_bloom.html
 
-// import * as THREE from 'three'
+import * as THREE from 'three'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module.js';
 // import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -110,7 +110,11 @@ export default {
       allCubes: [],
       offsetX: 0,
       // anti aliasing
-      fxaaPass: null
+      fxaaPass: null,
+      sizes: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
     }
   },
   computed: {
@@ -137,7 +141,7 @@ export default {
       self.setOrbitControls()
       self.setupKeyCode()
       self.render()
-    }, 200)
+    }, 20)
 
     // Socket related
     // Set color for client
@@ -370,20 +374,20 @@ export default {
     },
     setVars () {
       var self = this
-      self.clock = new self.$gThree.Clock()
+      self.clock = new THREE.Clock()
     },
     init () {
       var self = this
 
       // Texture Stacy
-      self.char_txt = new self.$gThree.TextureLoader().load('/textures/morphman-texture-test.jpg')
-      // self.char_txt = new self.$gThree.TextureLoader().load('/textures/stacy.jpg')
+      self.char_txt = new THREE.TextureLoader().load('/textures/morphman-texture-test.jpg')
+      // self.char_txt = new THREE.TextureLoader().load('/textures/stacy.jpg')
       
       self.char_txt.flipY = false
 
-      // self.char_mtl = new self.$gThree.MeshLambertMaterial({ color: 0x2194CE })
+      // self.char_mtl = new THREE.MeshLambertMaterial({ color: 0x2194CE })
 
-      self.char_mtl = new self.$gThree.MeshPhongMaterial({
+      self.char_mtl = new THREE.MeshPhongMaterial({
         map: self.stacy_txt,
         color: 0xffffff,
         skinning: true
@@ -392,42 +396,36 @@ export default {
       
       // Container
       self.container = self.$refs.cont_pixel_player
-      self.container.appendChild( self.$parent.renderer.domElement )
-
-      // Stats
-      // self.stats = new Stats()
-      // self.container.appendChild( self.stats.dom )
-      // console.log(Stats)
       
       // Parent adjustments
-      self.$parent.renderer.toneMapping = self.$gThree.ReinhardToneMapping 
+      self.renderer = new THREE.WebGLRenderer({
+        canvas: self.container,
+        antialias: true
+      })
+      self.renderer.setSize(self.sizes.width, self.sizes.height)
+      self.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      self.renderer.outputEncoding = THREE.sRGBEncoding
+      self.renderer.toneMapping = THREE.ReinhardToneMapping
       
       // Camera
-      self.camera = new self.$gThree.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 )
+      self.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 )
       self.camera.position.set( - 5, 2.5, - 3.5 )
-      self.scene = new self.$gThree.Scene()
-      
-      // OrbitControls
-      // self.controls = new OrbitControls( self.camera, self.$parent.renderer.domElement )
-      // self.controls.maxPolarAngle = Math.PI * 0.5
-			// self.controls.minDistance = 1
-			// self.controls.maxDistance = 100
-			// self.controls.enableDamping = true
+      self.scene = new THREE.Scene()
 
       // Lights
-      self.scene.add( new self.$gThree.AmbientLight( 0x404040 ) )
-      self.pointLight = new self.$gThree.PointLight( 0xffffff, 1 )
+      self.scene.add( new THREE.AmbientLight( 0x404040 ) )
+      self.pointLight = new THREE.PointLight( 0xffffff, 1 )
       self.camera.add( self.pointLight )
       
       var renderScene = new RenderPass( self.scene, self.camera );
 
-			var bloomPass = new UnrealBloomPass( new self.$gThree.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
+			var bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 1.5, 0.4, 0.85 );
 			bloomPass.threshold = self.params.bloomThreshold;
 			bloomPass.strength = self.params.bloomStrength;
       bloomPass.radius = self.params.bloomRadius;
       
       self.fxaaPass = new ShaderPass( FXAAShader )
-      var pixelRatio = self.$parent.renderer.getPixelRatio()
+      var pixelRatio = self.renderer.getPixelRatio()
       self.fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( self.container.offsetWidth * pixelRatio );
       self.fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( self.container.offsetHeight * pixelRatio );
 
@@ -435,42 +433,10 @@ export default {
       // composer1.addPass( renderPass );
       // composer1.addPass( fxaaPass );
 
-			self.composer = new EffectComposer( self.$parent.renderer );
+			self.composer = new EffectComposer( self.renderer );
 			self.composer.addPass( renderScene );
       self.composer.addPass( bloomPass );
       self.composer.addPass( self.fxaaPass );
-
-      // GUI - start
-			// self.gui = new GUI()
-			// self.gui.add( self.params, 'exposure', 0.1, 2 ).onChange( function ( value ) {
-      //   self.$parent.renderer.toneMappingExposure = Math.pow( value, 4.0 );
-			// })
-
-			// self.gui.add( self.params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
-      //   bloomPass.threshold = Number( value );
-			// })
-
-			// self.gui.add( self.params, 'bloomStrength', 0.0, 3.0 ).onChange( function ( value ) {
-      //   bloomPass.strength = Number( value );
-			// })
-
-			// self.gui.add( self.params, 'bloomRadius', 0.0, 1.0 ).step( 0.01 ).onChange( function ( value ) {
-      //   bloomPass.radius = Number( value );
-			// })
-      // // GUI - end
-
-      // window.addEventListener( 'resize', self.onResize, false );
-
-      // add plane to the scene
-      // var plane = new self.$gThree.Mesh(
-      //   new self.$gThree.BoxBufferGeometry( Math.PI, Math.sqrt( 2 ), Math.E ),
-      //   new self.$gThree.MeshLambertMaterial({
-      //     color: 0x00afaf,
-      //     emissive: 0x2a2a2a,
-      //     emissiveIntensity: .5,
-      //     side: self.$gThree.DoubleSide
-      // }));
-      // self.scene.add(plane);
 
       window.addEventListener( 'resize', self.onWindowResize, false );
 
@@ -535,8 +501,8 @@ export default {
       // }
 
       // console.log('obj id is: ', obj.clientId)
-      var geometry = new self.$gThree.BoxGeometry( s, s, s );
-      // var material = new self.$gThree.MeshBasicMaterial( {
+      var geometry = new THREE.BoxGeometry( s, s, s );
+      // var material = new THREE.MeshBasicMaterial( {
       //   color: 0x777777
       // } );
       // var randomColor = Math.floor(Math.random()*16777215).toString(16)
@@ -545,7 +511,7 @@ export default {
       // console.log('random color: ', randomColor)
       // console.log('obj.color: ', obj.color)
       
-      var material = new self.$gThree.MeshPhongMaterial({
+      var material = new THREE.MeshPhongMaterial({
         // color: 0x000000,
         // color: obj.color ? obj.color: 0xf5f5f5,
         // emissive: obj.color ? obj.color: 0xf5f5f5,
@@ -553,7 +519,7 @@ export default {
         emissive: obj.color ? obj.color : randomColor,
         flatShading: true,
       });
-      var cube = new self.$gThree.Mesh( geometry, material );
+      var cube = new THREE.Mesh( geometry, material );
       // Set name of cube
       cube.name = obj.clientId
 
@@ -629,7 +595,7 @@ export default {
       // if (typeof self.controls != 'undefined') {
       //   console.log('before undefined')
       // }
-      self.controls = new OrbitControls( self.camera, self.$parent.renderer.domElement );
+      self.controls = new OrbitControls( self.camera, self.renderer.domElement );
       // if (typeof self.controls != 'undefined') {
       //   console.log('after undefined')
       // }
@@ -646,14 +612,14 @@ export default {
 
       self.camera.aspect = self.width / self.height;
       self.camera.updateProjectionMatrix();
-      self.$parent.renderer.setSize(self.width, self.height);
+      self.renderer.setSize(self.width, self.height);
 
       // Get window width
       self.window = {w: window.innerWidth, h: window.innerHeight}
       console.log('windowW: ', self.window.w)
 
       // self.render()
-      // self.$parent.renderer.render(self.scene, self.camera)
+      // self.renderer.render(self.scene, self.camera)
     }
   }
 }
