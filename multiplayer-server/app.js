@@ -112,7 +112,7 @@ socketio.on('connection', socket => {
 })
 
 // http.listen(3000, '192.168.0.101');
-http.listen(3000, () => {
+http.listen(process.env.PORT || 3000, () => {
   console.log(`Server listening on 3000`);
   // console.log(`Server listening on http://${host}:${port}`);
 });

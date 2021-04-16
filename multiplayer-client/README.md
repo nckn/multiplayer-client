@@ -25,18 +25,26 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 
 
+
+## multiplayer deployed here:
+https://multiplayer-templates.netlify.app/
+
 Consists of two parts
-
-## multiplayer-client deployed here:
-https://multiplayer-client.netlify.app/
-
+## multiplayer-client
 ## multiplayer-server
+
+Following this tutorial
+Netlify and Heroku deployment for Socket IO snake game
+https://www.youtube.com/watch?v=M9RDYkFs-EQ
 
 
 <!--  -->
 Heroku
 
 $ heroku login
+<!-- Click okay and return to terminal -->
+
+$ heroku 
 
 
 <!-- Other stuff -->
