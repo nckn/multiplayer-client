@@ -33,10 +33,11 @@ Consists of two parts
 ## multiplayer-client
 ## multiplayer-server
 
-Following this tutorial
-Netlify and Heroku deployment for Socket IO snake game
-https://www.youtube.com/watch?v=M9RDYkFs-EQ
-
+## Following this tutorial
+## Netlify and Heroku deployment for Socket IO snake game
+## https://www.youtube.com/watch?v=M9RDYkFs-EQ
+## Github repo:
+## https://github.com/HungryTurtleCode/multiplayerSnake
 
 <!--  -->
 Heroku

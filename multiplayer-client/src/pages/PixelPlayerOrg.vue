@@ -89,8 +89,8 @@ export default {
       socket: {},
       // context: {},
       // ip: 'http://192.168.87.107:3000', // USE
-      // ip: '192.168.1.128:3000', // Hiper Fiber
-      ip: 'https://mighty-temple-28923.herokuapp.com', // Heroku production
+      ip: '192.168.1.128:3000', // Hiper Fiber
+      // ip: 'https://mighty-temple-28923.herokuapp.com', // Heroku production
       colorPicker: null,
       clientDetails: {id: 0},
       thisClient: {
