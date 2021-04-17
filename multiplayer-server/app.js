@@ -2,6 +2,10 @@ const express = require('express')();
 const http = require('http').Server(express);
 const socketio = require('socket.io')(http);
 
+const cors = require('cors');
+const app = express();
+app.use(cors());
+
 // socketio.of('/chat').clients((error, clients) => {
 //   if (error) throw error;
 //   console.log(clients); // => [PZDoMHjiu8PYfRiKAAAF, Anw2LatarvGVVXEIAAAD]
